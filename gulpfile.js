@@ -56,11 +56,11 @@ gulp.task('compileSass', function() {
       .pipe(maps.write('./'))
       .pipe(flatten())
       .pipe(gulp.dest('css'));
-  del.sync('css/circle');
+  return del.sync('css/circle');
 });
 
 /** Minify styles and store in final destination */
-gulp.task('styles', ['cleanStyles', 'compileSass'], function() {
+gulp.task('styles', ['compileSass'], function() {
     //return gulp.src(dist.styles + '/*.css')   
     return gulp.src(paths.css)                       
       .pipe(csso())
@@ -69,15 +69,7 @@ gulp.task('styles', ['cleanStyles', 'compileSass'], function() {
 });
 
 /** SCRIPT MANIPULATION ---------------  */
-/** Combine js files and make sourcemaps */
-gulp.task('concatScripts', function() {
-  return gulp.src(paths.scripts)
-      .pipe(maps.init())
-      .pipe(concat('global.js'))
-      .pipe(maps.write('./'))
-      .pipe(gulp.dest('js'));
-});
-
+/** Error checking js files */
 gulp.task('lint', function() {
   return gulp.src(['**/*.js', '!node_modules/**'])
     .pipe(eslint())
@@ -85,8 +77,17 @@ gulp.task('lint', function() {
     .pipe(eslint.failAfterError());
 });
 
+/** Combine js files and make sourcemaps */
+gulp.task('concatScripts', ['lint'], function() {
+  return gulp.src(paths.scripts)
+      .pipe(maps.init())
+      .pipe(concat('global.js'))
+      .pipe(maps.write('./'))
+      .pipe(gulp.dest('js'));
+});
+
 /** Minify script files and store in final destination */
-gulp.task('scripts', ['lint', 'cleanScripts', 'concatScripts'], function() {
+gulp.task('scripts', ['concatScripts'], function() {
   return gulp.src('./js/*.js')                          
     .pipe(uglify())
     .pipe(rename('all.min.js'))
@@ -102,12 +103,12 @@ gulp.task('images', function() {
 });
 
 /** BUILD TASKS ------------------------  */
-gulp.task("prebuild", ['clean', 'concatScripts', 'compileSass', 'images'], function() {
+gulp.task('prebuild', ['clean', 'images'], function() {
     return gulp.src(["icons/**"], { base: './'})
         .pipe(gulp.dest('dist')); 
 });
 
-gulp.task("build", ['prebuild'], function() {
+gulp.task('build', ['prebuild', 'compileSass', 'concatScripts'], function() {
     gulp.src('./*.html')
         .pipe(useref())
         .pipe(iff('*.js', uglify()))         
