@@ -24,6 +24,7 @@ $h6: 1.4rem;
 // Colors
 
 $display-color: #222222;
+//$body-color: red;
 $body-color: #666666;
 
 $primary: #689b98;
@@ -37,14 +38,16 @@ $color-inactive: #999999;
 $secondary-label: lighten($secondary, 20%);
 
 $positive: #54b26c;
+//$negative: red;
 $negative: #ed5a5a;
 
 $button-color: $link;
 
 $header-color: #222222;
-$background-color: white;
+$background-color: #fff;
 
 $border-color: #e1e1e1;
+//$border-color: red;
 
 //////////////////////////////////////
 // Icons

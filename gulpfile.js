@@ -59,17 +59,12 @@ gulp.task('compileSass', function() {
   del.sync('css/circle');
 });
 
-/** Rename style files to reflect impending minification */
-gulp.task('renameStyles', ['compileSass'], function() {
-    return gulp.src(paths.css)                          
-      .pipe(rename('all.min.css'))
-      .pipe(gulp.dest('./dist/styles'));
-});
-
 /** Minify styles and store in final destination */
-gulp.task('styles', ['cleanStyles', 'renameStyles'], function() {
-    return gulp.src(dist.styles + '/*.css')                          
+gulp.task('styles', ['cleanStyles', 'compileSass'], function() {
+    //return gulp.src(dist.styles + '/*.css')   
+    return gulp.src(paths.css)                       
       .pipe(csso())
+      .pipe(rename('all.min.css'))
       .pipe(gulp.dest(dist.styles));
 });
 
@@ -88,13 +83,6 @@ gulp.task('lint', function() {
     .pipe(eslint())
     .pipe(eslint.format())
     .pipe(eslint.failAfterError());
-});
-
-/** Rename sctipt files to reflect  impending minification */
-gulp.task('renameScripts', ['concatScripts'], function() {
-  return gulp.src('./js/*.js')                          
-      .pipe(rename('all.min.js'))
-      .pipe(gulp.dest(dist.scripts));
 });
 
 /** Minify script files and store in final destination */
@@ -127,8 +115,17 @@ gulp.task("build", ['prebuild'], function() {
         .pipe(gulp.dest('./dist')); 
 });
 
+gulp.task('watchFiles', function() {
+    // pass it the files you want to watch and then the task that should take place
+    // when a file changes
+    // Each watch block is independent of each other and will only run a block
+    // when a file in that block changes
+    gulp.watch('sass/**/*.scss', ['styles']); // scss/**/*.scss -- this is a globbing pattern
+    gulp.watch('js/**/*.js', ['scripts']);
+});
+
 /** SERVE TASK -----------------------  */
-gulp.task('serve', ['watchFiles']);
+gulp.task('serve', ['build', 'watchFiles']);
 
 /** DEFAULT TASKS --------------------  */
 gulp.task("default", function() {

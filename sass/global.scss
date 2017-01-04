@@ -12,6 +12,7 @@ body {
   left: 0;
   right: 0;
   z-index: 2;
+  //background: red;
   background: rgba(#222222, 0.98);
 }
 
@@ -21,7 +22,7 @@ body {
       list-style: none;
       li {
         padding: 20px 0 20px 75px;
-        border-bottom: 1px solid $border-color;
+        border-bottom: 1px solid #666666;
       }
       h3 {
         margin: 0 0 15px;
@@ -37,6 +38,7 @@ body {
       }
       p {
         margin: 0 0 10px;
+        color: red;
       }
       .timestamp {
         font-size: 1.2rem;
