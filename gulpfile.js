@@ -1,8 +1,7 @@
 "use strict";
 
-var gulp    = require('gulp'),
+var   gulp  = require('gulp'),
   imagemin  = require('gulp-imagemin'),
-   flatten  = require('gulp-flatten'),
      uglify = require('gulp-uglify'),
      eslint = require('gulp-eslint'),
      concat = require('gulp-concat'),
@@ -11,16 +10,17 @@ var gulp    = require('gulp'),
        sass = require('gulp-sass'),
        maps = require('gulp-sourcemaps'),
         del = require('del'),
-        iff = require('gulp-if'),
-       csso = require('gulp-csso');
+       csso = require('gulp-csso'),
+runSequence = require('run-sequence'),
+browserSync = require('browser-sync').create();
 
      var paths = {
-       scripts: './js/**/*',
+       scripts: 'js/**/*.js',
        sass: 'sass/**/*.scss',
        html: 'index.html',
-       images: './images/**/*',
-       icons: '/icons/**',
-       css: '/css/*.css'
+       images: 'images/**/*',
+       icons: 'icons/**',
+       css: 'css/*.css'
      };
 
      var dist = {
@@ -50,23 +50,29 @@ gulp.task('cleanScripts', function() {
 /** STYLE MANIPULATION ------------------  */
 /** Compile sass files and make sourcemaps */
 gulp.task('compileSass', function() {
-  gulp.src(paths.sass)
+  return gulp.src(paths.sass)
       .pipe(maps.init())
       .pipe(sass())
       .pipe(maps.write('./'))
-      .pipe(flatten())
       .pipe(gulp.dest('css'));
-  return del.sync('css/circle');
+});
+
+gulp.task('minifyStyles', function() {
+  return gulp.src('dist/styles/all.min.css')
+    .pipe(csso())
+    .pipe(gulp.dest(dist.styles));
 });
 
 /** Minify styles and store in final destination */
 gulp.task('styles', ['compileSass'], function() {
     //return gulp.src(dist.styles + '/*.css')   
-    return gulp.src(paths.css)                       
+    return gulp.src(paths.css)                     
       .pipe(csso())
       .pipe(rename('all.min.css'))
       .pipe(gulp.dest(dist.styles));
+
 });
+
 
 /** SCRIPT MANIPULATION ---------------  */
 /** Error checking js files */
@@ -86,9 +92,18 @@ gulp.task('concatScripts', ['lint'], function() {
       .pipe(gulp.dest('js'));
 });
 
+gulp.task('minifyScripts', function() {
+  return gulp.src('dist/scripts/all.min.js')
+    .pipe(uglify())
+    .pipe(gulp.dest(dist.scripts));
+});
+
 /** Minify script files and store in final destination */
 gulp.task('scripts', ['concatScripts'], function() {
-  return gulp.src('./js/*.js')                          
+  return gulp.src('js/global.js')   
+    .pipe(eslint())
+    .pipe(eslint.format())
+    .pipe(eslint.failAfterError())         
     .pipe(uglify())
     .pipe(rename('all.min.js'))
     .pipe(gulp.dest(dist.scripts));
@@ -103,19 +118,23 @@ gulp.task('images', function() {
 });
 
 /** BUILD TASKS ------------------------  */
-gulp.task('prebuild', ['clean', 'images'], function() {
-    return gulp.src(["icons/**"], { base: './'})
+gulp.task('html', ['scripts', 'styles'], function() {
+    return gulp.src(paths.html)
+      .pipe(useref())
+      .pipe(gulp.dest('dist'));
+});
+
+gulp.task('moveFiles', function() {
+  return gulp.src(["icons/**"], { base: './'})
         .pipe(gulp.dest('dist')); 
 });
-
-gulp.task('build', ['prebuild', 'compileSass', 'concatScripts'], function() {
-    gulp.src('./*.html')
-        .pipe(useref())
-        .pipe(iff('*.js', uglify()))         
-        .pipe(iff('*.css', csso()))
-        .pipe(gulp.dest('./dist')); 
+    
+gulp.task('build', function() {
+    runSequence('clean', 'html', 'minifyScripts', 'minifyStyles', ['images', 'moveFiles']);
 });
 
+
+/** WATCH TASK ------------------------- */
 gulp.task('watchFiles', function() {
     // pass it the files you want to watch and then the task that should take place
     // when a file changes
@@ -125,10 +144,26 @@ gulp.task('watchFiles', function() {
     gulp.watch('js/**/*.js', ['scripts']);
 });
 
+gulp.task('css-watch', ['styles'], function(done) {
+    browserSync.reload();
+    done();
+});
+
+gulp.task('js-watch', ['scripts'], function(done) {
+    browserSync.reload();
+    done();
+});
+
 /** SERVE TASK -----------------------  */
-gulp.task('serve', ['build', 'watchFiles']);
+gulp.task('serve', function() {
+  browserSync.init({
+    server: {
+      baseDir: './'
+    }
+  });
+  gulp.watch('sass/**/*.scss', ['css-watch']); // scss/**/*.scss -- this is a globbing pattern
+  gulp.watch('js/**/*.js', ['js-watch']);
+});
 
 /** DEFAULT TASKS --------------------  */
-gulp.task("default", function() {
-  gulp.start('build');
-});
+gulp.task("default", ['build']);
