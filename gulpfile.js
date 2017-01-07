@@ -134,16 +134,7 @@ gulp.task('build', function() {
 });
 
 
-/** WATCH TASK ------------------------- */
-gulp.task('watchFiles', function() {
-    // pass it the files you want to watch and then the task that should take place
-    // when a file changes
-    // Each watch block is independent of each other and will only run a block
-    // when a file in that block changes
-    gulp.watch('sass/**/*.scss', ['styles']); // scss/**/*.scss -- this is a globbing pattern
-    gulp.watch('js/**/*.js', ['scripts']);
-});
-
+/** WATCH TASKS ------------------------- */
 gulp.task('css-watch', ['styles'], function(done) {
     browserSync.reload();
     done();
